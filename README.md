@@ -132,3 +132,72 @@ public class KafkaProducerConfig {
 
 }
 ````
+
+## Kafka Template
+
+De manera rápida configuraremos un @Bean para poder enviar un mensaje a nuestro topic `magadiflo` utilizando el @Bean
+que creamos en la sección anterior `KafkaTemplate<String, String> kafkaTemplate()` pero inyectado como una dependencia
+vía parámetro del método, veamos cómo:
+
+````java
+
+@SpringBootApplication
+public class MainApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(MainApplication.class, args);
+    }
+
+    /**
+     * Usamos inyección de dependencia vía parámetro del método.
+     * Enviamos nuestro mensaje al Topic: magadiflo
+     */
+    @Bean
+    public CommandLineRunner commandLineRunner(KafkaTemplate<String, String> kafkaTemplate) {
+        return args -> {
+            kafkaTemplate.send("magadiflo", "Hola Kafka desde Spring Boot");
+        };
+    }
+}
+````
+
+Si hasta este punto ejecutamos la aplicación veremos que todo se sigue ejecutando correctamente y nuestro mensaje
+ya se habría enviado al topic `magadiflo`. Ahora, necesitamos una forma de verlo, así que en la siguiente sección
+crearemos un Consumer para eso.
+
+## Kafka Consumer
+
+Otra forma de poder crear un consumidor de manera rápida, para recibir los mensajes, es a través de
+la `línea de comandos`, para eso nos posicionamos en la ruta de instalación de `Kafka` y ejecutamos el siguiente
+comando (notar que debemos colocar el topic que creamos `magadiflo`):
+
+````bash
+.\bin\windows\kafka-console-consumer.bat --topic magadiflo --from-beginning --bootstrap-server localhost:9092
+````
+
+Finalmente, deberíamos observar en consola nuestro mensaje enviado, veamos el ejemplo:
+
+````bash
+C:\kafka_2.13-3.5.0
+.\bin\windows\kafka-console-consumer.bat --topic magadiflo --from-beginning --bootstrap-server localhost:9092
+Hola Kafka desde Spring Boot
+````
+
+Ahora modifiquemos el envío de mensajes para enviar 1 millón de mensajes, **al hacerlo veremos en la consola del
+consumidor cómo es que se va recepcionando los mensajes:**
+
+````java
+
+@SpringBootApplication
+public class MainApplication {
+    /* omitted code */
+    @Bean
+    public CommandLineRunner commandLineRunner(KafkaTemplate<String, String> kafkaTemplate) {
+        return args -> {
+            for (int i = 0; i < 1000_000; i++) {
+                kafkaTemplate.send("magadiflo", i + ", hola!");
+            }
+        };
+    }
+}
+````
