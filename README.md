@@ -89,3 +89,46 @@ example-topic
 magadiflo
 magadiflo-topic
 ````
+
+## Producer Config
+
+Crearemos la clase de configuración de nuestro Producer, quien se encargará de producir los mensajes. En este caso
+solo trabajaremos con `Strings`, pero fácilmente podríamos enviar todo tipo de objetos, incluso clases personalizadas:
+
+````java
+
+@Configuration
+public class KafkaProducerConfig {
+
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
+    public Map<String, Object> producerConfig() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, this.bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return props;
+    }
+
+    /**
+     * Fábrica productora que es responsable de crear instancias productoras.
+     */
+    @Bean
+    public ProducerFactory<String, String> producerFactory() {
+        return new DefaultKafkaProducerFactory<>(this.producerConfig());
+    }
+
+    /**
+     * Necesitamos una forma de enviar mensajes. Esto es posible con Kafka Template.
+     *
+     * El parámetro ProducerFactory<String, String> producerFactory del método kafkaTemplate()
+     * está siendo inyectado y ese objeto inyectado es el @Bean producerFactory()
+     */
+    @Bean
+    public KafkaTemplate<String, String> kafkaTemplate(ProducerFactory<String, String> producerFactory) {
+        return new KafkaTemplate<>(producerFactory);
+    }
+
+}
+````
