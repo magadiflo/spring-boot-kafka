@@ -302,3 +302,55 @@ C:\kafka_2.13-3.5.0
 Bien, todo está funcionando correctamente. Hasta este punto tenemos dos consumidores, uno que tenemos en
 la `línea de comandos` y el otro, nuestra propia aplicación de `Spring Boot`.
 
+## Restful API y Kafka
+
+Crearemos un Record para poder recibir el mensaje desde el cliente:
+
+````java
+public record MessageRequest(String message) {
+}
+````
+
+Ahora, creamos nuestro controlador que recibirá los mensajes enviados desde el cliente HTTP. Aquí utilizamos
+el `KafkaTemplate` para poder producir los mensajes:
+
+````java
+
+@RestController
+@RequestMapping(path = "/api/v1/messages")
+public class MessageController {
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    public MessageController(KafkaTemplate<String, String> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    @PostMapping
+    public void publish(@RequestBody MessageRequest request) {
+        this.kafkaTemplate.send("magadiflo", request.message());
+    }
+}
+````
+
+Finalmente, ejecutamos la aplicación y enviamos un mensaje vía http con nuestro cliente curl:
+
+````bash
+curl -v -X POST -H "Content-Type: application/json" -d "{\"message\": \"Api Rest con Kafka\"}" http://localhost:8080/api/v1/messages | jq
+
+< HTTP/1.1 200
+````
+
+Como resultado obtenemos en consola del IDE:
+
+````bash
+2023-09-05T20:11:47.925-05:00  INFO 10596 --- [ntainer#0-0-C-1] com.magadiflo.kafka.app.KafkaListeners   : Dato recibido: Api Rest con Kafka
+````
+
+Lo mismo ocurre en la línea de comando:
+
+````bash
+C:\kafka_2.13-3.5.0
+.\bin\windows\kafka-console-consumer.bat --topic magadiflo --from-beginning --bootstrap-server localhost:9092
+Api Rest con Kafka
+````
