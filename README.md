@@ -238,3 +238,67 @@ public class KafkaConsumerConfig {
     }
 }
 ````
+
+## Kafka Listener
+
+Crearemos un Listener que estará recibiendo los mensajes del productor:
+
+````java
+
+@Component
+public class KafkaListeners {
+
+    private static final Logger LOG = LoggerFactory.getLogger(KafkaListeners.class);
+
+    /**
+     * El topics "magadiflo" es el que creamos con el producer.
+     * En la anotación @KafkaListener también debemos pasarle un identificador de grupos
+     * (groupId) de modo que si escalamos, es decir, si tenemos más instancias de la
+     * misma aplicación, básicamente pueden leer desde la misma partición o topic, así que
+     * le asignaremos un identificador, por ejemplo "magadifloId" (tiene que ser un
+     * identificador único).
+     */
+    @KafkaListener(topics = {"magadiflo"}, groupId = "magadifloId")
+    public void listener(String data) {
+        LOG.info("Dato recibido: {}", data);
+    }
+}
+````
+
+Hasta este punto ejecutamos la aplicación y observamos en consola del IDE IntelliJ IDEA parte del resultado obtenido:
+
+````bash
+INFO 10204 --- [ad | producer-1] o.a.k.c.p.internals.TransactionManager   : [Producer clientId=producer-1] ProducerId set to 0 with epoch 0
+INFO 10204 --- [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : magadifloId: partitions assigned: [magadiflo-0]
+INFO 10204 --- [ntainer#0-0-C-1] com.magadiflo.kafka.app.KafkaListeners   : Dato recibido: 0, hola!
+INFO 10204 --- [ntainer#0-0-C-1] com.magadiflo.kafka.app.KafkaListeners   : Dato recibido: 1, hola!
+INFO 10204 --- [ntainer#0-0-C-1] com.magadiflo.kafka.app.KafkaListeners   : Dato recibido: 2, hola!
+INFO 10204 --- [ntainer#0-0-C-1] com.magadiflo.kafka.app.KafkaListeners   : Dato recibido: 3, hola!
+INFO 10204 --- [ntainer#0-0-C-1] com.magadiflo.kafka.app.KafkaListeners   : Dato recibido: 4, hola!
+INFO 10204 --- [ntainer#0-0-C-1] com.magadiflo.kafka.app.KafkaListeners   : Dato recibido: 5, hola!
+INFO 10204 --- [ntainer#0-0-C-1] com.magadiflo.kafka.app.KafkaListeners   : Dato recibido: 6, hola!
+INFO 10204 --- [ntainer#0-0-C-1] com.magadiflo.kafka.app.KafkaListeners   : Dato recibido: 7, hola!
+INFO 10204 --- [ntainer#0-0-C-1] com.magadiflo.kafka.app.KafkaListeners   : Dato recibido: 8, hola!
+INFO 10204 --- [ntainer#0-0-C-1] com.magadiflo.kafka.app.KafkaListeners   : Dato recibido: 9, hola!
+````
+
+Recordemos que también tenemos un consumidor en la línea de comandos:
+
+````bash
+C:\kafka_2.13-3.5.0
+.\bin\windows\kafka-console-consumer.bat --topic magadiflo --from-beginning --bootstrap-server localhost:9092
+0, hola!
+1, hola!
+2, hola!
+3, hola!
+4, hola!
+5, hola!
+6, hola!
+7, hola!
+8, hola!
+9, hola!
+````
+
+Bien, todo está funcionando correctamente. Hasta este punto tenemos dos consumidores, uno que tenemos en
+la `línea de comandos` y el otro, nuestra propia aplicación de `Spring Boot`.
+
